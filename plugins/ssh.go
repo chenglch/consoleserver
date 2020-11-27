@@ -104,6 +104,11 @@ func (self *SSHConsole) appendPasswordAuthMethod(autoMethods *[]ssh.AuthMethod) 
 		*autoMethods = append(*autoMethods, ssh.Password(self.password))
 	}
 }
+func (self *SSHConsole) appendKeyboardInteractiveAuthMethod(autoMethods *[]ssh.AuthMethod) {
+	if self.password != "" {
+		*autoMethods = append(*autoMethods, ssh.KeyboardInteractive(func(user, instruction string, questions []string, echos []bool) (answers []string, err error) { return answers, nil } ))
+	}
+}
 
 func (self *SSHConsole) keepSSHAlive(cl *ssh.Client, conn net.Conn) error {
 	const keepAliveInterval = time.Minute
@@ -137,6 +142,7 @@ func (self *SSHConsole) connectToHost() error {
 	autoMethods := make([]ssh.AuthMethod, 0)
 	self.appendPrivateKeyAuthMethod(&autoMethods)
 	self.appendPasswordAuthMethod(&autoMethods)
+	self.appendKeyboardInteractiveAuthMethod(&autoMethods)
 	sshConfig := &ssh.ClientConfig{
 		User:            self.user,
 		Auth:            autoMethods,
